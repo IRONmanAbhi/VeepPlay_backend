@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
 from VeePlay.models import Content
+from VeePlay.content.utils import generate_presigned_url
 
 main = Blueprint("main", __name__)
 
@@ -7,10 +8,9 @@ main = Blueprint("main", __name__)
 def serialize_video(video):
     return {
         "id": video.id,
-        "s3_path": video.s3_path,
-        "thumbnail_url": video.thumbnail_url,
+        "s3_path": generate_presigned_url(video.s3_path),
+        "thumbnail_url": video.thumbnail_path,
         "duration": video.duration,
-        "trailer_url": video.trailer_url,
     }
 
 
@@ -20,7 +20,11 @@ def serialize_episode(episode):
         "title": episode.title,
         "description": episode.description,
         "episode_no": episode.episode_no,
-        "video": serialize_video(episode.video) if episode.video else None,
+        "video": {
+            "s3_path": generate_presigned_url(episode.s3_path),
+            "thumbnail_url": generate_presigned_url(episode.thumbnail_path),
+            "duration": episode.duration,
+        },
     }
 
 
@@ -38,19 +42,17 @@ def serialize_content(content):
         "name": content.name,
         "description": content.description,
         "type": content.type,
-        "banner": content.banner,
-        "language": content.language,
-        "category": content.category,
-        "thumbnail": content.thumbnail,
-        "release_date": content.release_date.strftime("%Y-%m-%d"),
+        "poster": generate_presigned_url(content.poster),
+        "trailer": generate_presigned_url(content.trailer),
+        "genre": content.genre,
         "seasons": (
             [serialize_season(s) for s in content.seasons]
-            if content.type == "show"
+            if content.type.lower() == "s"  # 'S' for show
             else []
         ),
         "video": (
-            serialize_video(content.video)
-            if content.type == "movie" and content.video
+            serialize_video(content.movie_video)
+            if content.type.lower() == "m" and content.movie_video
             else None
         ),
     }
@@ -60,10 +62,9 @@ def serialize_content(content):
 @main.route("/home")
 def home():
     contents = Content.query.all()
+    enumerated = [serialize_content(c) for c in contents]
     return (
-        jsonify(
-            {"status": "success", "contents": [serialize_content(c) for c in contents]}
-        ),
+        jsonify({"status": "success", "contents": enumerated}),
         200,
     )
 

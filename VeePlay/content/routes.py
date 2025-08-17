@@ -51,7 +51,9 @@ def get_show_details(show_name):
                 {
                     "episode_no": ep.episode_no,
                     "title": ep.title,
+                    "description": ep.description,
                     "thumbnail": generate_presigned_url(ep.thumbnail_path),
+                    "video_url": generate_presigned_url(ep.s3_path),
                 }
                 for ep in season.episodes
             ],
@@ -143,12 +145,12 @@ def get_episode(show_name, season_number, episode_number):
     ).first()
     if not episode:
         return jsonify({"message": "Episode not found"}), 404
-
     return (
         jsonify(
             {
-                "title": episode.title,
-                "description": episode.description,
+                "show_id": show.id,
+                "title": str(episode.title),
+                "description": str(episode.description),
                 "s3_path": generate_presigned_url(episode.s3_path),
                 "thumbnail_path": generate_presigned_url(episode.thumbnail_path),
                 "duration": episode.duration,

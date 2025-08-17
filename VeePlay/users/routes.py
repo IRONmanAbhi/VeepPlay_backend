@@ -3,6 +3,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from VeePlay.models import User, WatchHistory, UsedTokens
 from VeePlay import mail, db, bcrypt
 from VeePlay.users.utils import savePicture, send_reset_emails
+from VeePlay.content.utils import generate_presigned_url
 
 users = Blueprint("users", __name__)
 
@@ -55,17 +56,16 @@ def account_details():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    history = WatchHistory.query.filter_by(user_id=user.id).all()
     history_data = []
-    for entry in history:
-        content = entry.content
+    for entry in user.watch_history:
         history_data.append(
             {
-                "content_id": content.id,
-                "content_name": content.name,
-                "content_type": content.type,
-                "poster": content.poster,
+                "id": entry.id,
+                "content_id": entry.content_id,
                 "progress": entry.progress,
+                "content_name": entry.content.name,
+                "poster": generate_presigned_url(entry.content.poster),
+                "type": entry.content.type,
             }
         )
 
@@ -83,17 +83,14 @@ def account_details():
     )
 
 
-@users.route("/account/<string:email>", methods=["PUT"])
+@users.route("/account", methods=["PUT"])
 @jwt_required()
-def edit_info(email):
-    current_user_id = get_jwt_identity()
-    user = User.query.filter_by(email=email).first()
+def edit_info():
+    current_user_email = get_jwt_identity()
+    user = User.query.filter_by(id=current_user_email).first()
 
     if not user:
         return jsonify({"message": "User not found"}), 404
-
-    if user.id != current_user_id:
-        return jsonify({"message": "Unauthorized"}), 403
 
     old_img_file = user.img_file
 

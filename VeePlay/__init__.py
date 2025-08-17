@@ -29,6 +29,10 @@ def create_app():
     cors.init_app(app)
     jwt.init_app(app)
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+    }
 
     app.s3_client = boto3.client(
         "s3",

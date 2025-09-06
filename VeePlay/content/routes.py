@@ -29,8 +29,8 @@ def get_all_movies():
         {
             "name": movie.name,
             "description": movie.description,
-            "poster": movie.poster,
-            "trailer": movie.trailer,
+            "poster": generate_presigned_url(movie.poster),
+            "trailer": generate_presigned_url(movie.trailer),
             "genre": movie.genre,
         }
         for movie in movies
@@ -88,7 +88,7 @@ def get_movie_details(movie_name):
             {
                 "name": movie.name,
                 "description": movie.description,
-                "trailer": movie.trailer,
+                "trailer": generate_presigned_url(movie.trailer),
                 "poster": generate_presigned_url(movie.poster),
                 "genre": movie.genre,
                 "video": {
@@ -112,11 +112,14 @@ def get_movie_video(movie_name):
         return jsonify({"message": "Video not found"}), 404
     video = movie.movie_video
     signed_url = generate_presigned_url(video.s3_key)
+    signed_thumbnail = (
+        generate_presigned_url(video.thumbnail_path) if video.thumbnail_path else None
+    )
     return (
         jsonify(
             {
                 "s3_path": signed_url,
-                "thumbnail_path": video.thumbnail_path,
+                "thumbnail_path": signed_thumbnail,
                 "duration": video.duration,
             }
         ),

@@ -16,13 +16,17 @@ login_manager.login_message_category = "info"
 mail = Mail()
 cors = CORS()
 jwt = JWTManager()
+db = SQLAlchemy()
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db = SQLAlchemy(app, engine_options={"pool_pre_ping": True})
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+    }
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
@@ -30,10 +34,6 @@ def create_app():
     cors.init_app(app)
     jwt.init_app(app)
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-        "pool_pre_ping": True,
-        "pool_recycle": 1800,
-    }
 
     app.s3_client = boto3.client(
         "s3",

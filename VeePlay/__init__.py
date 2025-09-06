@@ -9,7 +9,6 @@ from flask_jwt_extended import JWTManager
 import boto3
 from datetime import timedelta
 
-db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 login_manager.login_view = "users.login"
@@ -22,6 +21,8 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db = SQLAlchemy(app, engine_options={"pool_pre_ping": True})
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)

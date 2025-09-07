@@ -110,11 +110,15 @@ def get_movie_video(movie_name):
     movie = Content.query.filter_by(name=movie_name, type="M").first()
     if not movie or not movie.movie_video:
         return jsonify({"message": "Video not found"}), 404
+
     video = movie.movie_video
-    signed_url = generate_presigned_url(video.s3_key)
+
+    signed_url = generate_presigned_url(video.s3_path)
+
     signed_thumbnail = (
         generate_presigned_url(video.thumbnail_path) if video.thumbnail_path else None
     )
+
     return (
         jsonify(
             {

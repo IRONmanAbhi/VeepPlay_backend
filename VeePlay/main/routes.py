@@ -101,3 +101,16 @@ def about():
         ),
         200,
     )
+
+
+@main.route("/status")
+def status():
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "message": "VeePlay API is running",
+            }
+        ),
+        200,
+    )
